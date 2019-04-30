@@ -1,0 +1,15 @@
+<div class="card">
+    <h1 class="card-header text-center">TOP 10</h1>
+    <div class="card-body text-center">
+        <ul class="list-group" ng-repeat="m in mejores | orderBy:'-punt_max' | limitTo:10" >
+            <li class="list-group-item list-group-item-light flex-column">
+                <div class="w-100 justify-content-between">
+                    <span class="badge badge-secondary">#{{$index+1}} </span>
+                    <lead>{{m.alias}}</lead>
+                    <span>{{m.punt_max}}</span>
+                </div>
+            </li>
+        </ul>
+        <a href="index.html" class="btn btn-info btn-lg btn-block"> Inicio 🏁 </a>
+    </div>
+</div>

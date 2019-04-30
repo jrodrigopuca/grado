@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Game</title>
+    <script src="https://aframe.io/releases/0.8.2/aframe.min.js"></script>
+    
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.0.1/lib/anime.min.js"></script>
+    <script src="https://raw.githubusercontent.com/ngokevin/a-animation/master/dist/a-animation.min.js"></script>
+    -->
+</head>
+
+<body>
+    <script>
+        var vida = 100;
+        var valor = 0;
+        var segundos = 0;
+
+        function utf8_to_b64(string) {
+            return window.btoa(unescape(encodeURIComponent(string)));
+        }
+
+
+        AFRAME.registerComponent('ia', {
+            schema: {
+            },
+            init: function () { },
+            update: function () { },
+            tick: function (time, timeDelta) {
+                //seg=seg = ~~(time / 1000);
+                /**/
+                //console.log(Math.log10(time)*0.01)
+                var camera = document.querySelector('#cam');
+                var worldPos = new THREE.Vector3();
+                worldPos.setFromMatrixPosition(camera.object3D.matrixWorld);
+                //console.log(worldPos.x);
+                const mover = () => {
+                    //let mi = time / 1200000 + 0.01;
+                    //return (Math.random() * mi) + 0.01;
+                    let mi=time/300000
+                    return (mi**2)+0.01;
+                }
+
+
+                if (worldPos.x < this.el.object3D.position.x) {
+                    this.el.object3D.position.x -= mover();
+                } else if (worldPos.x > this.el.object3D.position.x) {
+                    this.el.object3D.position.x += mover();
+                }
+
+                if (worldPos.y < this.el.object3D.position.y) {
+                    this.el.object3D.position.y -= mover();
+                }
+                if (worldPos.y > this.el.object3D.position.y) {
+                    this.el.object3D.position.y += mover();
+                }
+
+                if (worldPos.z < this.el.object3D.position.z) {
+                    this.el.object3D.position.z -= mover();
+                }
+                if (worldPos.z > this.el.object3D.position.z) {
+                    this.el.object3D.position.z += mover();
+                }
+
+                if ((Math.floor(this.el.object3D.position.x - worldPos.x) == 0) && (Math.floor(this.el.object3D.position.z - worldPos.z) == 0)) {
+                    vida -= 1;
+                    console.log(segundos, valor);
+
+                    if (vida > 0) { actualizarVida(vida); }
+                    if (vida == 0) {
+                        let dir=utf8_to_b64(segundos.toString()+"."+valor.toString());
+                        window.location.href = `index.html#!/resultado/${dir}`;
+                    }
+                    //console.log(vida);
+                }
+            },
+        })
+
+        AFRAME.registerComponent("fly", {
+            schema: {
+                stepFactor: { type: "number", default: 0.08 },
+                isFlying: { type: "boolean", default: true }
+            },
+            tick: function () {
+                if (this.data.isFlying) {
+                    let newP = this.el.components.camera.camera.parent.position.add(this.el.components.camera.camera.getWorldDirection().multiplyScalar(this.data.stepFactor));
+                    this.el.setAttribute('position', newP)
+                }
+            }
+        });
+
+        var max = 15;
+        var min = -15;
+        AFRAME.registerComponent('mover', {
+            schema: {
+                enY: { type: 'number' },
+                enX: { type: 'number' },
+                enZ: { type: 'number' },
+                enPiso: { type: 'boolean' },
+                tiempoPiso: { type: 'number' }
+            },
+            init: function () {
+                //console.log("inicia");
+                //Tomar las posiciones iniciales
+                this.enX = this.el.object3D.position.x;
+                this.enY = this.el.object3D.position.y;
+                this.enZ = this.el.object3D.position.z;
+            },
+            update: function () {
+            },
+            tick: function (time, timeDelta) {
+                seg = ~~(time / 1000);
+
+                if (this.el.object3D.position.y < 1) {
+                    if (this.enPiso == false) {
+                        //console.log("cayo!");
+                        this.tiempoPiso = 0;
+                        this.enPiso = true;
+                    }
+                    else {
+                        this.tiempoPiso += 1;
+                        if (this.tiempoPiso >= 500) {
+                            //console.log("haz algo!");
+                            this.el.object3D.position.z = Math.floor(Math.random() * (max - min + 1)) + min;
+                            this.el.object3D.position.x = Math.floor(Math.random() * (max - min + 1)) + min;
+                            this.el.object3D.position.y = this.enY; // a la misma altura
+                        }
+                    }
+                }
+                else {
+                    this.el.object3D.position.y -= 0.1;
+                    this.enPiso = false;
+                }
+            }
+        })    
+    </script>
+    <h1 id="hPuntos" style="z-index: 1; position:absolute; user-select: none; color:white; font-size: 3em;">
+        Puntos
+    </h1>
+    <h1 id="hVida"
+        style="margin-top: 3em;z-index: 1; position:absolute; user-select: none; color:white; font-size: 3em;">
+        Vida
+    </h1>
+    <h1 id="hTiempo"
+        style="margin-top: 5em;z-index: 1; position:absolute; user-select: none; color:white; font-size: 3em;">
+        Tiempo
+    </h1>
+    <a-scene loading-screen="dotsColor: white; backgroundColor: #c4835d">
+        <a-assets>
+            <a-asset-item id="appleTree" src="assets/models3d/AppleTree.gltf"></a-asset-item>
+            <a-asset-item id="rocks" src="assets/models3d/low_poly_rocks/scene.gltf"></a-asset-item>
+            <a-asset-item id="orange" src="assets/models3d/Orange_01.gltf"></a-asset-item>
+            <a-asset-item id="lemon" src="assets/models3d/Lemon_01(1).gltf"></a-asset-item>
+            <a-asset-item id="strawberry" src="assets/models3d/Strawberry_01.gltf"></a-asset-item>
+            <a-asset-item id="apple" src="assets/models3d/Apple_01.gltf"></a-asset-item>
+        </a-assets>
+
+        <a-plane rotation="-90 0 0" width="100" height="100" repeat="100 100" color="#c4835d"></a-plane>
+
+        <a-entity ia id="enemy" position="7 0 5" gltf-model="assets/models3d/enemy/model.gltf"></a-entity>
+        <a-entity ia id="enemy" position="2 0 4" gltf-model="assets/models3d/enemy/model.gltf"></a-entity>
+
+        <a-entity class="piso" gltf-model="#rocks" position="3.285 1.52631 -5" scale="0.25 0.1 0.25"></a-entity>
+
+        <!--
+            light="color: #ffff00; intensity: 3.4"
+        -->
+        <a-entity class="tree" sound="src: url(assets/music/thunderchild.ogg); autoplay: true" gltf-model="#appleTree"
+            position="-1 0 -2" scale="2 2 2"></a-entity>
+
+        <a-text position="-12 2 -23.21571" value="Outsider v1.2" width="32" text=""></a-text>
+
+        <!--frutas-->
+        <a-entity class="fruta" gltf-model="#orange" position="-2 50 3" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#apple" position="-7 45 9" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#strawberry" position="-3 30 13" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#apple" position="4 40 -2" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#orange" position="-8 48 -3" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#orange" position="-1 52 -8" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#strawberry" position="-3 60 3" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#strawberry" position="9 57 10" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#orange" position="15 48 3" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#apple" position="12 52 8" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#strawberry" position="9 60 4" scale="0.05 0.05 0.05" mover></a-entity>
+        <a-entity class="fruta" gltf-model="#apple" position="7 57 2" scale="0.05 0.05 0.05" mover></a-entity>
+
+        <a-entity id="cam" camera tilt-turn fly position="-9.60934 2.10441 -21.51932" wasd-controls look-controls
+            rotation="-4.812845479098913 580.8646127036272 0" data-aframe-inspector-original-camera="">
+            <a-cursor scale="2 2 2" color="white" opacity="0.8" shader="flat" material="" cursor="" geometry="">
+
+                <a-animation begin="click" easing="ease-in" attribute="color" from="white" to="red" dur="1000">
+                </a-animation>
+                <a-animation begin="fusing" easing="ease-in" attribute="color" from="red" to="white" dur="1000">
+                </a-animation>
+
+            </a-cursor>
+        </a-entity>
+
+
+        <a-sky src="assets/images/fondo7.jpg"></a-sky>
+    </a-scene>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="game.js"></script>
+</body>

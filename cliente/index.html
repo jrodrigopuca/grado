@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Juego</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.5/angular-route.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ngStorage/0.3.10/ngStorage.min.js"></script>
+    <link rel="stylesheet" href="res.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+</head>
+
+<body ng-app="app">
+    <div class="fondo">
+        <ul class="bg-bubbles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </div>
+
+
+    <script>
+        const app = angular.module('app', ['ngRoute', "ngStorage"]);
+        function b64_to_utf8(str) {
+            return decodeURIComponent(escape(window.atob(str)));
+        }
+
+        app.config(function ($routeProvider) {
+            $routeProvider
+                .when("/", {
+                    templateUrl: "comienzo.html",
+                    controller: 'ctrlComienzo'
+                })
+                .when("/resultado/:t", {
+                    templateUrl: "resultado.html",
+                    controller: 'ctrlResultado'
+                })
+                .when("/perfil", {
+                    templateUrl:"perfil.html",
+                    controller:'ctrlPerfil'
+                })
+                .when("/ranking", {
+                    templateUrl: "ranking.html",
+                    controller: 'ctrlRanking'
+                })
+                .when("/acerca", {
+                    templateUrl: 'acerca.html'
+                })
+                .when("/informes", {
+                    templateUrl: 'informe.html',
+                    controller: 'ctrlInformes'
+                })
+        })
+
+        app.controller('ctrlComienzo', function ($scope, $routeParams, $http, $sessionStorage) {
+            // traer los datos almacenados
+            $scope.$storage = $sessionStorage;
+            $scope.userName = "";
+
+            // función para crear nombre de 3 iniciales
+            function crearUser() {
+                let alphabet = "ABCDEFGHIJKLMNOPQRSTUWXYZ";
+                let userName = "";
+                for (let i = 0; i < 3; i++) {
+                    let letra = alphabet[~~(Math.random() * alphabet.length - 1)];
+                    userName += letra;
+                }
+                return userName;
+            }
+
+            function enviarUser(data) {
+                let retorno = new Array();
+                jQuery.when(
+                    jQuery.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        url: "https://yardev.net/grado/api/player.php",
+                        data: data,
+                        success: (data) => {
+                            let respuesta = data["respuesta"];
+                            retorno = [false, respuesta["id"], respuesta["huella"]];
+                            console.log(retorno);
+                        },
+                        error: (er) => {
+                            console.log("error", er);
+                            retorno = [true, "", ""];
+
+                        }
+                    })).then(() => {
+                        [$scope.$storage.error, $scope.$storage.id, $scope.$storage.huella] = retorno;
+                        console.log("pasamos!", $scope.$storage.error);
+                    })
+            }
+
+
+            // Si no hay usuario lo crea
+            if ($scope.$storage.UserName == null) {
+                console.log("creando user");
+                $scope.$storage.UserName = crearUser();
+                $scope.userName = $scope.$storage.UserName;
+
+                $http.get('https://api.ipify.org?format=json')
+                    .then(function (response) {
+                        //console.log('ip', response.data.ip);
+                        $scope.ip = response.data.ip;
+                        let data = `alias=${$scope.$storage.UserName}&ip=${$scope.ip}&action=post`;
+                        enviarUser(data);
+                    })
+
+            } else {
+                $scope.userName = $scope.$storage.UserName;
+            }
+
+        })
+
+
+        app.controller('ctrlResultado', function ($scope, $routeParams, $http, $sessionStorage) {
+            $scope.$storage = $sessionStorage;
+            let b64 = b64_to_utf8($routeParams.t);
+            let parametros = b64.split(".")
+            $scope.tiempo = parametros[0];
+            $scope.puntos = parametros[1];
+
+            function enviarPartida(data) {
+                let retorno = new Array();
+                jQuery.when(
+                    jQuery.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        url: "https://yardev.net/grado/api/partida.php",
+                        data: data,
+                        success: (data) => {
+                            console.log(data);
+                        },
+                        error: (er) => {
+                            console.log("error", er);
+                        }
+                    })).then(() => {
+                        console.log("datos de partida enviada");
+                    })
+            }
+
+
+            $http.get('https://yardev.net/grado/api/mensaje.php')
+                .then(function (response) {
+                    $scope.mensaje_desc = response.data.descripcion;
+                    $scope.mensaje_id = response.data.id;
+                    let data = `huella=${$scope.$storage.huella}&idJugador=${$scope.$storage.id}&idMensaje=${$scope.mensaje_id}&tiempo=${$scope.tiempo}&puntos=${$scope.puntos}&action=post`;
+
+                    enviarPartida(data);
+
+                })
+
+            $scope.compartirTexto = function (texto) {
+                let mensaje = `¡${texto}!. Obtuve ${$scope.puntos} en ${$scope.tiempo}!`;
+                navigator.share({ title: "Outsider Game", text: mensaje, url: "" })
+            }
+
+
+        })
+
+        app.controller('ctrlRanking', function ($scope, $http) {
+
+            $http.get('https://yardev.net/grado/api/player.php')
+                .then(function (response) {
+                    $scope.mejores = response.data;
+                })
+        })
+
+        app.controller('ctrlInformes', function ($scope, $http) {
+            var contexto = document.getElementById('grafica').getContext('2d');
+            var data = [1, 2];
+            var labels = ["uno", "dos"];
+
+            var grafica = new Chart(contexto,
+                {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'num de ',
+                            data: data,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
+        })
+
+        app.controller('ctrlPerfil', function($scope, $http, $sessionStorage){
+            $scope.$storage = $sessionStorage;
+        
+            function traerPerfil(id){
+                $http.get(`https://yardev.net/grado/api/player.php?id=${id}`)
+                    .then(function (response) {
+                        data=response.data[0];
+                        $scope.alias=data.alias;
+                        $scope.puntos=data.punt_max;
+                        $scope.creado=data.last;
+                    })
+            }
+            
+            traerPerfil($scope.$storage.id);
+
+        })
+    </script>
+
+    <div class="ng-view container-fluid w-100 h-100 content"></div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>

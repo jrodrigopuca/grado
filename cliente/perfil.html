@@ -1,0 +1,11 @@
+<div class="card">
+    <h1 class="card-header text-center">Mi Perfil</h1>
+    <div class="card-body text-center">
+        <h3> Alias: {{alias}} </h3>
+        <h3> Puntaje Máximo: {{puntos}} 🥗</h3>
+        <h4> Actualizado desde: {{creado| date:'medium'}}</h4>
+        <a href="" class="btn btn-info btn-lg btn-block share" ng-show="navigator.share" ng-click="compartirTexto(mensaje_desc)">Compartir avance </a>
+        <a href="game.html" class="btn btn-success btn-lg btn-block">Jugar 🎮</a>
+        <a href="index.html" class="btn btn-info btn-lg btn-block"> Inicio 🏁 </a>
+    </div>
+</div>
