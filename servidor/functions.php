@@ -41,8 +41,7 @@ function getPlayers(){
             //"id"=>$row['id'],
             $player=array(
                 "alias"=>$row["alias"],
-                "punt_max"=>$row['punt_max'],
-                "pais"=>$row['pais']
+                "punt_max"=>$row['punt_max']
             );
             $players[]=$player;
         }
@@ -137,6 +136,27 @@ function getRandomMensaje(){
     unset($pdo);    
 }
 
+function getReport(){
+    $pdo= conecta();
+    $sql= "SELECT pais, ciudad, COUNT(ciudad) as cantidad FROM jugadores GROUP BY ciudad";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    if ($stmt->rowCount() > 0){
+        $cities=[];
+        while($row = $stmt->fetch()){
+            $city=array(
+                "pais"=>$row["pais"],
+                "ciudad"=>$row["ciudad"],
+                "cantidad"=>$row['cantidad']
+            );
+            $cities[]=$city;
+        }
+        echo json_encode($cities,JSON_NUMERIC_CHECK);
+    }
+    unset($stmt);
+    unset($pdo);   
+}
 
 function getPlayer($id){
     $pdo = conecta();

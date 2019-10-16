@@ -187,16 +187,29 @@
 
         app.controller('ctrlInformes', function ($scope, $http) {
             var contexto = document.getElementById('grafica').getContext('2d');
-            var data = [1, 2];
-            var labels = ["uno", "dos"];
+            $scope.data=[];
+            $scope.labels=[];
 
-            var grafica = new Chart(contexto,
+            function traerInforme(){
+                $http.get('https://yardev.net/grado/api/informe.php')
+                    .then((response)=>{
+                        //console.log(response.data)
+                        for (d of response.data){
+                            $scope.data.push(d.cantidad);
+                            $scope.labels.push(d.ciudad)
+                        }
+                        crearGrafica($scope.labels, $scope.data);
+                    })
+            }
+            function crearGrafica(labels,data){
+                
+                var grafica = new Chart(contexto,
                 {
                     type: 'bar',
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'num de ',
+                            label: 'cantidad',
                             data: data,
                             borderWidth: 1
                         }]
@@ -211,6 +224,14 @@
                         }
                     }
                 });
+            }
+
+
+            traerInforme();
+
+            
+
+
         })
 
         app.controller('ctrlPerfil', function($scope, $http, $sessionStorage){
